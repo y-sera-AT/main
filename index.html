@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Y-SERA — Youth Social Entrepreneurship Readiness Assessment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,340;0,9..144,460;0,9..144,560;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics-compat.js"></script>
+<style>
+  :root{
+    --mist:#F1F6F1;
+    --paper:#FFFFFF;
+    --ink:#16241F;
+    --ink-soft:#516057;
+    --compass:#1E5F74;
+    --compass-dark:#143F4D;
+    --compass-light:#DCEAEE;
+    --sprout:#3F8F5C;
+    --sprout-light:#DEEEE2;
+    --amber:#C8932E;
+    --amber-light:#F8EDD6;
+    --clay:#BD6A3E;
+    --clay-light:#F5E4D8;
+    --ember:#E2772F;
+    --ember-dark:#C45E1E;
+    --line:#DCE3DD;
+    --shadow:0 10px 30px rgba(22,36,31,0.08);
+    --shadow-sm:0 4px 14px rgba(22,36,31,0.06);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--mist);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces',serif;
+    font-weight:560;
+    letter-spacing:-0.01em;
+    margin:0 0 .5em 0;
+    color:var(--ink);
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:.72rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--compass);
+    font-weight:500;
+  }
+  p{margin:0 0 1em 0;color:var(--ink-soft);}
+  a{color:var(--compass);}
+  button{font-family:inherit;}
+  :focus-visible{outline:2.5px solid var(--ember); outline-offset:3px;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+
+  /* ---------- layout shells ---------- */
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px;}
+  .page{display:none;}
+  .page.active{display:block;}
+
+  /* ---------- nav ---------- */
+  .topnav{
+    position:sticky; top:0; z-index:40;
+    background:rgba(241,246,241,0.88);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .topnav-inner{
+    max-width:1080px;margin:0 auto;padding:14px 28px;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;cursor:pointer;border:none;background:none;padding:0;}
+  .brand-mark{width:34px;height:34px;flex:none;}
+  .brand-text{font-family:'Fraunces',serif;font-weight:560;font-size:1.18rem;color:var(--ink);}
+  .brand-text span{color:var(--compass);}
+  .nav-links{display:flex;gap:4px;align-items:center;}
+  .nav-link{
+    background:none;border:none;font-size:.92rem;font-weight:500;color:var(--ink-soft);
+    padding:8px 13px;border-radius:8px;cursor:pointer;transition:.15s;
+  }
+  .nav-link:hover{background:var(--compass-light);color:var(--compass-dark);}
+  .nav-link.active{color:var(--paper);background:var(--compass);}
+  .account-chip{
+    font-family:'IBM Plex Mono',monospace;font-size:.74rem;color:var(--ink-soft);
+    border:1px solid var(--line);padding:6px 11px;border-radius:20px;background:var(--paper);
+    white-space:nowrap;
+  }
+  .nav-mobile-toggle{display:none;}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    font-weight:600;font-size:.95rem;padding:13px 24px;border-radius:10px;
+    border:1.5px solid transparent;cursor:pointer;transition:.15s;text-decoration:none;
+  }
+  .btn-primary{background:var(--ember);color:#fff;}
+  .btn-primary:hover{background:var(--ember-dark);}
+  .btn-secondary{background:transparent;color:var(--compass-dark);border-color:var(--compass);}
+  .btn-secondary:hover{background:var(--compass-light);}
+  .btn-ghost{background:transparent;color:var(--ink-soft);border-color:var(--line);}
+  .btn-ghost:hover{background:var(--paper);}
+  .btn[disabled]{opacity:.4;cursor:not-allowed;}
+  .btn-row{display:flex;gap:14px;flex-wrap:wrap;}
+
+  /* ---------- hero ---------- */
+  .hero{padding:64px 0 36px;}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;}
+  .hero h1{font-size:clamp(2.1rem,4vw,3.1rem);line-height:1.06;}
+  .hero-lede{font-size:1.08rem;max-width:46ch;}
+  .hero-meta{display:flex;gap:22px;margin-top:28px;flex-wrap:wrap;}
+  .hero-meta div{font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--ink-soft);}
+  .hero-meta b{display:block;font-family:'Fraunces',serif;font-size:1.5rem;color:var(--ink);font-weight:560;}
+
+  /* ---------- path graphic (signature element) ---------- */
+  .path-card{background:var(--paper);border-radius:18px;box-shadow:var(--shadow);padding:26px 22px;}
+  .path-card .eyebrow{margin-bottom:14px;display:block;}
+  .stage-row{display:flex;align-items:flex-start;justify-content:space-between;position:relative;}
+  .stage-track{position:absolute;top:21px;left:34px;right:34px;height:3px;background:var(--line);border-radius:3px;}
+  .stage-track-fill{position:absolute;top:21px;left:34px;height:3px;background:linear-gradient(90deg,var(--clay),var(--amber),var(--sprout));border-radius:3px;}
+  .stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;width:33%;}
+  .stage-dot{width:44px;height:44px;border-radius:50%;background:var(--paper);border:3px solid var(--line);display:flex;align-items:center;justify-content:center;z-index:1;transition:.2s;}
+  .stage-dot svg{width:20px;height:20px;}
+  .stage.is-low .stage-dot{border-color:var(--clay);color:var(--clay);}
+  .stage.is-mod .stage-dot{border-color:var(--amber);color:var(--amber);}
+  .stage.is-high .stage-dot{border-color:var(--sprout);color:var(--sprout);}
+  .stage-label{font-size:.78rem;font-weight:600;text-align:center;color:var(--ink-soft);}
+  .stage-range{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--ink-soft);opacity:.75;}
+  .stage.is-current .stage-dot{background:currentColor;color:#fff !important;box-shadow:0 0 0 5px rgba(0,0,0,0.04);}
+  .stage.is-current .stage-label{color:var(--ink);}
+
+  /* dashboard preview mini bars */
+  .preview-bars{margin-top:18px;display:flex;flex-direction:column;gap:10px;}
+  .preview-bar-row{display:flex;align-items:center;gap:10px;font-size:.8rem;}
+  .preview-bar-label{width:84px;flex:none;color:var(--ink-soft);font-weight:500;}
+  .preview-bar-track{flex:1;height:9px;background:var(--mist);border-radius:6px;overflow:hidden;}
+  .preview-bar-fill{height:100%;border-radius:6px;transition:width .6s ease;}
+  .preview-bar-count{width:30px;text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);font-size:.74rem;}
+
+  /* ---------- sections ---------- */
+  section.block{padding:46px 0;}
+  .block-head{max-width:62ch;margin-bottom:34px;}
+  .divider{height:1px;background:var(--line);width:100%;}
+
+  .dim-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;}
+  .dim-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm);}
+  .dim-card .icon-badge{width:38px;height:38px;border-radius:10px;background:var(--compass-light);color:var(--compass-dark);display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+  .dim-card .icon-badge svg{width:19px;height:19px;}
+  .dim-card h3{font-size:1.02rem;margin-bottom:6px;}
+  .dim-card p{font-size:.87rem;margin:0;}
+
+  .steps-row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .step-card{background:var(--paper);border-radius:var(--radius);padding:22px;border:1px solid var(--line);}
+  .step-num{font-family:'IBM Plex Mono',monospace;color:var(--compass);font-size:.78rem;font-weight:500;margin-bottom:10px;}
+  .step-card h3{font-size:1rem;}
+  .step-card p{font-size:.87rem;margin:0;}
+
+  /* ---------- assessment ---------- */
+  .assess-shell{padding:40px 0 70px;}
+  .progress-rail{display:flex;gap:5px;margin-bottom:8px;}
+  .progress-seg{flex:1;height:5px;border-radius:4px;background:var(--line);overflow:hidden;}
+  .progress-seg .fill{height:100%;width:0%;background:var(--compass);transition:width .25s;}
+  .progress-seg.done .fill{width:100%;background:var(--sprout);}
+  .progress-seg.current .fill{width:100%;}
+  .progress-caption{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--ink-soft);margin-bottom:30px;}
+
+  .dim-header{margin-bottom:28px;}
+  .dim-header .eyebrow{margin-bottom:8px;}
+  .dim-header p{max-width:65ch;}
+
+  .q-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
+  .q-text{font-size:1rem;font-weight:500;color:var(--ink);margin-bottom:18px;}
+  .scale-row{display:flex;gap:7px;flex-wrap:wrap;}
+  .stone{
+    width:38px;height:38px;border-radius:50%;border:2px solid var(--line);background:var(--paper);
+    color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:500;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.12s;
+  }
+  .stone:hover{transform:translateY(-2px);border-color:var(--compass);}
+  .stone.filled{background:var(--compass-light);border-color:var(--compass);color:var(--compass-dark);}
+  .stone.selected{background:var(--compass);border-color:var(--compass);color:#fff;transform:scale(1.12);}
+  .scale-foot{display:flex;justify-content:space-between;margin-top:10px;}
+  .scale-foot span{font-size:.72rem;color:var(--ink-soft);}
+  .scale-readout{font-size:.78rem;font-weight:600;color:var(--compass-dark);min-height:1.2em;margin-top:8px;}
+
+  .assess-nav{display:flex;justify-content:space-between;align-items:center;margin-top:30px;}
+  .assess-hint{font-size:.8rem;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+
+  /* ---------- registration modal ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(22,36,31,0.45);display:flex;align-items:center;justify-content:center;
+    z-index:100;padding:20px;
+  }
+  .modal-overlay.hidden{display:none;}
+  .modal-card{background:var(--paper);border-radius:18px;max-width:420px;width:100%;padding:30px 28px;box-shadow:var(--shadow);}
+  .modal-card h2{font-size:1.4rem;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:.82rem;font-weight:600;color:var(--ink-soft);margin-bottom:6px;}
+  .field input{
+    width:100%;padding:11px 13px;border-radius:9px;border:1.5px solid var(--line);font-size:.95rem;
+    font-family:inherit;background:var(--mist);color:var(--ink);
+  }
+  .field input:focus{border-color:var(--compass);outline:none;background:var(--paper);}
+  .modal-foot{font-size:.78rem;color:var(--ink-soft);margin-top:6px;}
+
+  /* ---------- results ---------- */
+  .results-shell{padding:46px 0 70px;}
+  .result-top{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;margin-bottom:30px;}
+  .level-badge{
+    width:86px;height:86px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    flex:none;color:#fff;
+  }
+  .level-badge svg{width:38px;height:38px;}
+  .score-line{font-family:'IBM Plex Mono',monospace;font-size:.85rem;color:var(--ink-soft);margin-bottom:4px;}
+  .score-num{font-size:2.6rem;font-family:'Fraunces',serif;font-weight:560;}
+  .score-num small{font-size:1.1rem;color:var(--ink-soft);font-weight:400;}
+  .result-title{font-size:1.9rem;}
+  .result-pill{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:500;padding:4px 11px;border-radius:20px;margin-bottom:10px;}
+
+  .result-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:28px;margin-top:8px;}
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:24px;}
+  .panel h3{font-size:1.02rem;margin-bottom:14px;}
+  .check-list{list-style:none;margin:0;padding:0;}
+  .check-list li{display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:.9rem;color:var(--ink);}
+  .check-list li:last-child{border-bottom:none;}
+  .check-list li svg{width:16px;height:16px;flex:none;margin-top:3px;color:var(--sprout);}
+  .chip-list{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{background:var(--mist);border:1px solid var(--line);border-radius:20px;padding:7px 13px;font-size:.82rem;color:var(--ink);}
+  .goal-box{margin-top:20px;border-radius:var(--radius);padding:20px 22px;background:var(--compass);color:#fff;}
+  .goal-box .eyebrow{color:#cfe6ec;}
+  .goal-box p{color:#eaf3f5;margin:6px 0 0;}
+
+  /* ---------- dashboard ---------- */
+  .dash-shell{padding:46px 0 80px;}
+  .dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:30px;}
+  .stat-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;}
+  .stat-card .eyebrow{margin-bottom:8px;}
+  .stat-card .num{font-family:'Fraunces',serif;font-size:2rem;font-weight:560;}
+  .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:30px;}
+  .chart-panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px;}
+  .chart-panel h3{font-size:.95rem;margin-bottom:14px;}
+  .chart-panel canvas{max-height:240px;}
+  .dim-bars{display:flex;flex-direction:column;gap:12px;}
+  .dim-bar-row{display:grid;grid-template-columns:150px 1fr 38px;align-items:center;gap:10px;}
+  .dim-bar-row span:first-child{font-size:.82rem;color:var(--ink-soft);font-weight:500;}
+  .dim-bar-track{height:10px;background:var(--mist);border-radius:6px;overflow:hidden;}
+  .dim-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--compass),var(--sprout));}
+  .dim-bar-val{font-family:'IBM Plex Mono',monospace;font-size:.76rem;text-align:right;color:var(--ink-soft);}
+
+  table.results-table{width:100%;border-collapse:collapse;font-size:.86rem;}
+  table.results-table th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);padding:10px 12px;border-bottom:1.5px solid var(--line);}
+  table.results-table td{padding:11px 12px;border-bottom:1px solid var(--line);color:var(--ink);}
+  table.results-table tr:last-child td{border-bottom:none;}
+  .lvl-tag{font-family:'IBM Plex Mono',monospace;font-size:.7rem;padding:3px 9px;border-radius:14px;font-weight:500;}
+  .empty-state{padding:50px 20px;text-align:center;color:var(--ink-soft);}
+  .empty-state svg{width:42px;height:42px;color:var(--line);margin-bottom:12px;}
+  .shared-note{font-size:.78rem;color:var(--ink-soft);display:flex;align-items:center;gap:7px;margin-bottom:24px;}
+  .shared-note svg{width:15px;height:15px;flex:none;}
+
+  /* ---------- footer ---------- */
+  footer{border-top:1px solid var(--line);padding:36px 0;margin-top:30px;}
+  .footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+  .footer-inner p{margin:0;font-size:.84rem;}
+  .footer-links{display:flex;gap:18px;flex-wrap:wrap;}
+  .footer-links button{background:none;border:none;color:var(--ink-soft);font-size:.84rem;cursor:pointer;padding:0;}
+  .footer-links button:hover{color:var(--compass);}
+
+  @media (max-width: 860px){
+    .hero-grid{grid-template-columns:1fr;}
+    .result-grid{grid-template-columns:1fr;}
+    .charts-grid{grid-template-columns:1fr;}
+    .dash-stats{grid-template-columns:1fr;}
+    .steps-row{grid-template-columns:1fr;}
+    .nav-links{display:none;}
+    .nav-mobile-toggle{display:inline-flex;}
+  }
+  @media (max-width: 520px){
+    .stone{width:32px;height:32px;font-size:.74rem;}
+    .dim-bar-row{grid-template-columns:110px 1fr 34px;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <button class="brand" data-nav="home" aria-label="Y-SERA home">
+      <svg class="brand-mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="19" fill="#1E5F74"/>
+        <path d="M9 24c4-7 9-9 13-5s9 2 13-5" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+        <circle cx="14" cy="14" r="3" fill="#E2772F"/>
+      </svg>
+      <span class="brand-text">Y<span>-SERA</span></span>
+    </button>
+    <div class="nav-links" role="navigation">
+      <button class="nav-link" data-nav="home">Home</button>
+      <button class="nav-link" data-nav="about">About</button>
+      <button class="nav-link" data-nav="assessment">Assessment</button>
+      <button class="nav-link" data-nav="dashboard">Dashboard</button>
+    </div>
+    <span class="account-chip" id="account-chip">Not registered</span>
+  </div>
+</nav>
+
+<main id="app">
+
+  <!-- ===================== HOME ===================== -->
+  <section class="page active" id="page-home">
+    <div class="wrap hero">
+      <div class="hero-grid">
+        <div>
+          <span class="eyebrow">Youth Social Entrepreneurship Readiness Assessment</span>
+          <h1>Discover your readiness for social entrepreneurship.</h1>
+          <p class="hero-lede">Y-SERA is a web-based assessment that helps youth-preneurs understand where they stand. A 10-point self-assessment across seven dimensions places you on the path from <strong>Low</strong> to <strong>Moderate</strong> to <strong>High</strong> readiness — with next steps built for each stage.</p>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btn-start-assessment">Start Assessment →</button>
+            <button class="btn btn-secondary" data-nav="about">Learn More About Y-SERA</button>
+          </div>
+          <div class="hero-meta">
+            <div><b id="home-stat-total">—</b>youth-preneurs assessed</div>
+            <div><b>7</b>readiness dimensions</div>
+            <div><b>3</b>readiness levels</div>
+          </div>
+        </div>
+        <div class="path-card">
+          <span class="eyebrow">The readiness path</span>
+          <div class="stage-row">
+            <div class="stage-track"></div>
+            <div class="stage-track-fill" style="width:100%"></div>
+            <div class="stage is-low">
+              <div class="stage-dot">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M12 10C12 6 9 4 6 4c0 4 2 6 6 6Z"/></svg>
+              </div>
+              <div class="stage-label">Low</div>
+              <div class="stage-range">42–164</div>
+            </div>
+            <div class="stage is-mod">
+              <div class="stage-dot">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V8M12 8C8 8 5 6 5 3c4 0 7 2 7 5Zm0 0c0-3 3-5 7-5 0 3-3 5-7 5Z"/></svg>
+              </div>
+              <div class="stage-label">Moderate</div>
+              <div class="stage-range">165–287</div>
+            </div>
+            <div class="stage is-high">
+              <div class="stage-dot">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="6"/><path d="M12 3v4M9 5l1.5 2M15 5l-1.5 2"/></svg>
+              </div>
+              <div class="stage-label">High</div>
+              <div class="stage-range">288–420</div>
+            </div>
+          </div>
+          <div class="divider" style="margin:20px 0 16px"></div>
+          <span class="eyebrow">Live snapshot</span>
+          <div class="preview-bars" id="home-preview-bars"><!-- injected --></div>
+          <button class="btn btn-ghost" style="margin-top:16px;width:100%" data-nav="dashboard">View full dashboard</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap block">
+      <div class="block-head">
+        <span class="eyebrow">Seven dimensions</span>
+        <h2>What Y-SERA measures</h2>
+        <p>Each dimension contributes six items, scored on a 10-point scale, for a total of 42 items.</p>
+      </div>
+      <div class="dim-grid" id="home-dim-grid"><!-- injected --></div>
+    </div>
+
+    <div class="wrap block">
+      <div class="block-head">
+        <span class="eyebrow">How it works</span>
+        <h2>Three steps to your readiness level</h2>
+      </div>
+      <div class="steps-row">
+        <div class="step-card"><div class="step-num">Step 1</div><h3>Complete the assessment</h3><p>Answer all 42 self-assessment items using a 10-point scale, organised into seven short dimension pages.</p></div>
+        <div class="step-card"><div class="step-num">Step 2</div><h3>Receive your readiness level</h3><p>Your responses classify your readiness as Low, Moderate, or High — instantly, with your full score.</p></div>
+        <div class="step-card"><div class="step-num">Step 3</div><h3>View your next steps</h3><p>Get level-based recommendations and Malaysian programmes matched to where you are right now.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ABOUT ===================== -->
+  <section class="page" id="page-about">
+    <div class="wrap block" style="padding-top:50px">
+      <span class="eyebrow">About the tool</span>
+      <h1 style="font-size:2.1rem">What is Y-SERA?</h1>
+      <p style="max-width:62ch;font-size:1.02rem">Y-SERA is a web-based assessment tool designed to identify youths' readiness to engage in social entrepreneurship. It assesses seven key dimensions that contribute to social entrepreneurship readiness, then maps each participant onto one of three readiness levels with tailored next steps.</p>
+    </div>
+    <div class="wrap block" style="padding-top:0">
+      <div class="dim-grid" id="about-dim-grid"><!-- injected --></div>
+    </div>
+    <div class="wrap block">
+      <div class="block-head">
+        <span class="eyebrow">How Y-SERA works</span>
+        <h2>From answers to action</h2>
+      </div>
+      <div class="steps-row">
+        <div class="step-card"><div class="step-num">Step 1</div><h3>Complete the assessment</h3><p>Answer the self-assessment items using a 10-point scale.</p></div>
+        <div class="step-card"><div class="step-num">Step 2</div><h3>Receive your readiness level</h3><p>Your responses will be used to classify your readiness as Low, Moderate, or High.</p></div>
+        <div class="step-card"><div class="step-num">Step 3</div><h3>View suggested next steps</h3><p>Receive level-based recommendations to support your social entrepreneurship development journey.</p></div>
+      </div>
+      <div class="btn-row" style="margin-top:30px">
+        <button class="btn btn-primary" id="btn-start-assessment-2">Start Assessment →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ASSESSMENT ===================== -->
+  <section class="page" id="page-assessment">
+    <div class="wrap assess-shell">
+      <div class="progress-rail" id="progress-rail"><!-- injected --></div>
+      <div class="progress-caption">
+        <span id="progress-caption-left">Dimension 1 of 7</span>
+        <span id="progress-caption-right">0 of 6 answered</span>
+      </div>
+      <div class="dim-header">
+        <span class="eyebrow" id="dim-icon-eyebrow">Dimension</span>
+        <h2 id="dim-title">—</h2>
+        <p id="dim-desc">—</p>
+      </div>
+      <div id="q-container"><!-- injected questions --></div>
+      <div class="assess-nav">
+        <button class="btn btn-ghost" id="btn-back">← Back</button>
+        <span class="assess-hint" id="assess-hint">Answer all 6 items to continue</span>
+        <button class="btn btn-primary" id="btn-next" disabled>Next →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== RESULTS ===================== -->
+  <section class="page" id="page-results">
+    <div class="wrap results-shell" id="results-container">
+      <!-- injected -->
+    </div>
+  </section>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <section class="page" id="page-dashboard">
+    <div class="wrap dash-shell">
+      <div class="block-head">
+        <span class="eyebrow">For trainers &amp; programme organisers</span>
+        <h1 style="font-size:2rem">Y-SERA overall readiness dashboard</h1>
+        <p>An overview of participants' social entrepreneurship readiness based on completed Y-SERA assessments.</p>
+      </div>
+      <p class="shared-note" id="shared-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-1a4 4 0 0 0-3-3.87M9 20H4v-1a4 4 0 0 1 3-3.87M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Zm5 5a3 3 0 1 0-6 0M5 12a3 3 0 1 1 6 0"/></svg>
+        <span id="shared-note-text">This data is shared across everyone using this tool, and anonymised by name where possible.</span>
+      </p>
+      <div class="dash-stats" id="dash-stats"><!-- injected --></div>
+      <div class="charts-grid">
+        <div class="chart-panel"><h3>Readiness level distribution</h3><canvas id="chart-bar"></canvas></div>
+        <div class="chart-panel"><h3>Share of participants by level</h3><canvas id="chart-pie"></canvas></div>
+      </div>
+      <div class="chart-panel" style="margin-bottom:30px">
+        <h3>Average score per dimension <span style="font-weight:400;color:var(--ink-soft)">(out of 10)</span></h3>
+        <div class="dim-bars" id="dim-bars"><!-- injected --></div>
+      </div>
+      <div class="chart-panel">
+        <h3>Recent participants</h3>
+        <div id="dash-table-wrap"><!-- injected --></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <p><strong>Y-SERA</strong> — Youth Social Entrepreneurship Readiness Assessment Tool.<br>Supporting youth-preneurs in understanding their readiness for social entrepreneurship.</p>
+    <div class="footer-links">
+      <button data-nav="home">Home</button>
+      <button data-nav="about">About Y-SERA</button>
+      <button data-nav="assessment">Assessment</button>
+      <button data-nav="dashboard">Dashboard</button>
+      <button id="btn-clear-mine">Clear my data</button>
+    </div>
+  </div>
+</footer>
+
+<!-- ===================== REGISTER MODAL ===================== -->
+<div class="modal-overlay hidden" id="modal-register">
+  <div class="modal-card">
+    <span class="eyebrow">Quick registration</span>
+    <h2>Create your Y-SERA profile</h2>
+    <p style="font-size:.88rem">This just personalises your results and lets you resume the assessment. No password needed for this demo.</p>
+    <form id="register-form">
+      <div class="field">
+        <label for="reg-name">Full name</label>
+        <input id="reg-name" type="text" required placeholder="e.g. Aiman Haziq">
+      </div>
+      <div class="field">
+        <label for="reg-email">Email (optional)</label>
+        <input id="reg-email" type="email" placeholder="you@example.com">
+      </div>
+      <div class="btn-row" style="margin-top:18px">
+        <button type="submit" class="btn btn-primary" style="flex:1">Continue to assessment</button>
+        <button type="button" class="btn btn-ghost" id="btn-cancel-register">Cancel</button>
+      </div>
+    </form>
+    <p class="modal-foot">Your name is stored only for this assessment tool and shown on the trainer dashboard.</p>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   DATA
+========================================================= */
+const ICONS = {
+  awareness: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  resources: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="18" height="11" rx="2"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/></svg>',
+  motivation: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c2 4-3 5-1 9 1-1 2-2 2-4 2 2 3 5 1 8a6 6 0 0 1-9-3c0-4 3-5 4-8 1 1 1.5 2 1.5 2s.5-2.5 1.5-4Z"/></svg>',
+  mindset: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a6 6 0 0 0-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0 0 12 2Z"/></svg>',
+  knowledge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>',
+  rolemodel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.9 6 6.6.6-5 4.4 1.5 6.4L12 16.8 6 19.4l1.5-6.4-5-4.4 6.6-.6L12 2Z"/></svg>',
+  experience: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8l-2 6-6 2 2-6 6-2Z"/></svg>'
+};
+
+const DIMENSIONS = [
+  { key:'awareness', name:'Social Awareness', short:'Awareness',
+    description:'The ability to understand how other people feel, think, and what they may need — helping you show empathy, communicate well, and build positive relationships.',
+    items:[
+      {id:'aw1', text:'I consider how my business or entrepreneurial decisions may affect other people.'},
+      {id:'aw2', text:'I can recognise the emotions of people around me.'},
+      {id:'aw3', text:'I am sensitive to the feelings and concerns of others.'},
+      {id:'aw4', text:'I am aware of the challenges faced by people in my community.'},
+      {id:'aw5', text:'I am motivated to contribute to positive social change.'},
+      {id:'aw6', text:'I care about the well-being of others when developing an entrepreneurial idea.'}
+    ]},
+  { key:'resources', name:'Social Entrepreneurial Resources', short:'Resources',
+    description:'The support and assets needed to start and grow a social enterprise — money, skills, knowledge, networks, mentors, community and institutional support.',
+    items:[
+      {id:'re1', text:'I am aware of financial support or funding opportunities available for starting a social enterprise.'},
+      {id:'re2', text:'I know where to look for funding or financial support to start a social enterprise.'},
+      {id:'re3', text:'I believe I can obtain sufficient financial support to develop a social enterprise idea.'},
+      {id:'re4', text:'I have received entrepreneurship education through school, university, or other formal learning programmes.'},
+      {id:'re5', text:'I have learned how entrepreneurship can be used to address social challenges.'},
+      {id:'re6', text:'I have participated in entrepreneurship training, workshops, or programmes outside formal education.'}
+    ]},
+  { key:'motivation', name:'Social Motivation', short:'Motivation',
+    description:'The inner drive that encourages you to get involved in social entrepreneurship — to help others, solve community problems, and create lasting impact.',
+    items:[
+      {id:'mo1', text:'Creating positive change in the community gives me a sense of personal accomplishment.'},
+      {id:'mo2', text:'I am motivated when my efforts contribute to improving the lives of others.'},
+      {id:'mo3', text:'Making a meaningful social impact is important to me when pursuing entrepreneurial activities.'},
+      {id:'mo4', text:'I am willing to stay committed to projects that address social issues.'},
+      {id:'mo5', text:'Helping disadvantaged individuals or communities motivates me to become an entrepreneur.'},
+      {id:'mo6', text:'Knowing that my business can create positive social change gives me a strong sense of purpose.'}
+    ]},
+  { key:'mindset', name:'Social Entrepreneurial Mindset', short:'Mindset',
+    description:'How you think and act when solving social problems through entrepreneurship — creativity, confidence, persistence, and calculated risk-taking.',
+    items:[
+      {id:'mi1', text:'I am willing to think independently when making decisions, even if my ideas differ from others.'},
+      {id:'mi2', text:'I am willing to take calculated risks to create positive social impact.'},
+      {id:'mi3', text:'I am passionate about using entrepreneurship to address social and community issues.'},
+      {id:'mi4', text:'I enjoy generating creative ideas to solve social problems.'},
+      {id:'mi5', text:'I can turn ideas into practical actions that create social value.'},
+      {id:'mi6', text:'I remain determined when facing challenges in achieving social goals.'}
+    ]},
+  { key:'knowledge', name:'Social Entrepreneurial Knowledge', short:'Knowledge',
+    description:'Your understanding of how to start, manage, and grow a social enterprise — from opportunity identification to marketing, finance and impact.',
+    items:[
+      {id:'kn1', text:'I have sufficient knowledge of business management to support a social enterprise.'},
+      {id:'kn2', text:'I know how to organize and manage the operations of a social enterprise effectively.'},
+      {id:'kn3', text:'I understand how to develop and commercialize a social enterprise idea.'},
+      {id:'kn4', text:'I have knowledge of marketing strategies to promote products or services that create social impact.'},
+      {id:'kn5', text:'I know how to identify and access resources such as funding, grants, or support programs for social enterprises.'},
+      {id:'kn6', text:'I understand the legal and regulatory requirements involved in establishing a social enterprise.'}
+    ]},
+  { key:'rolemodel', name:'Role Model Influence', short:'Role Models',
+    description:'How role models — people who inspire, guide and support you — build your confidence and shape your entrepreneurial journey.',
+    items:[
+      {id:'rm1', text:'Exposure to role models encourages interest in social entrepreneurship.'},
+      {id:'rm2', text:'Entrepreneurs who create positive social impact motivate the pursuit of social entrepreneurship.'},
+      {id:'rm3', text:'Successful social entrepreneurs influence future career direction.'},
+      {id:'rm4', text:'Guidance from a mentor or experienced social entrepreneur would improve readiness for social entrepreneurship.'},
+      {id:'rm5', text:'Learning about successful social entrepreneurs increases interest in social entrepreneurship.'},
+      {id:'rm6', text:'Learning how social entrepreneurs overcome difficulties helps prepare for future challenges.'}
+    ]},
+  { key:'experience', name:'Prior Experience', short:'Experience',
+    description:'Previous involvement in social issues — volunteering, community work, or working with social organisations — that builds knowledge, skills and confidence.',
+    items:[
+      {id:'ex1', text:'Prior experience with social issues increases readiness for social entrepreneurship.'},
+      {id:'ex2', text:'Volunteering with social organizations strengthens the ability to solve social problems through business.'},
+      {id:'ex3', text:'Understanding how social organizations function helps prepare individuals for social entrepreneurship.'},
+      {id:'ex4', text:'Familiarity with societal challenges contributes to the motivation to create social impact through business.'},
+      {id:'ex5', text:'Hands-on involvement in solving social issues enhances entrepreneurial thinking for social good.'},
+      {id:'ex6', text:'Early exposure to business activities, such as helping in a family business, contributes to entrepreneurial readiness.'}
+    ]}
+];
+
+const SCALE_ANCHORS = [
+  {max:2, text:'Not at all true for me'},
+  {max:4, text:'Slightly true for me'},
+  {max:6, text:'Somewhat true for me'},
+  {max:8, text:'Mostly true for me'},
+  {max:10, text:'Completely true for me'}
+];
+function anchorFor(v){ return SCALE_ANCHORS.find(a=>v<=a.max).text; }
+
+const LEVELS = {
+  Low: {
+    key:'Low', label:'Low Readiness', stageIdx:0, min:42, max:164,
+    color:'var(--clay)', bg:'var(--clay-light)', icon:ICONS.experience,
+    title:"You're Just Getting Started!",
+    p1:"Thank you for completing the Y-SERA assessment. Based on your score, you are currently at the early stage of your social entrepreneurship journey. This indicates that you may still be developing your understanding of social issues, entrepreneurial skills, access to resources, and confidence to start a social enterprise.",
+    p2:"At this stage, it is important to build a strong foundation by increasing your exposure to social entrepreneurship concepts and practices. You are encouraged to:",
+    bullets:[
+      'Participate in introductory social entrepreneurship workshops and training programmes.',
+      'Attend seminars, webinars, and community engagement activities related to social innovation and community development.',
+      'Seek guidance from mentors, lecturers, trainers, or experienced social entrepreneurs.',
+      'Volunteer with non-governmental organisations (NGOs), community-based organisations, or social enterprises to gain practical exposure.',
+      'Improve your knowledge of business planning, marketing, financial management, and social impact creation.'
+    ],
+    programmes:['Institut Keusahawanan Negara (INSKEN)','SME Corp Malaysia Entrepreneurship Development Programmes','TEKUN Nasional Entrepreneurship Training','Youth and Sports Ministry (KBS) Youth Development Programmes','University-based entrepreneurship centres and social innovation initiatives'],
+    goal:'Focus on learning, building awareness, and gaining practical experience before launching a social enterprise.'
+  },
+  Moderate: {
+    key:'Moderate', label:'Moderate Readiness', stageIdx:1, min:165, max:287,
+    color:'var(--amber)', bg:'var(--amber-light)', icon:ICONS.mindset,
+    title:"You're on the Right Path!",
+    p1:"Well done. Your Y-SERA score indicates that you have developed a reasonable level of readiness for social entrepreneurship. You already possess some understanding of social issues, entrepreneurial thinking, and the motivation to create positive social impact. However, there are still areas that can be strengthened to increase your chances of success.",
+    p2:"At this stage, you should focus on enhancing your practical skills and expanding your professional network. You are encouraged to:",
+    bullets:[
+      'Participate in advanced entrepreneurship and social innovation training programmes.',
+      'Develop and validate a social enterprise idea that addresses a specific community need.',
+      'Build partnerships with community organisations, NGOs, local authorities, and industry players.',
+      'Strengthen your knowledge of business sustainability, impact measurement, and resource mobilisation.',
+      'Seek mentorship from successful entrepreneurs and social enterprise founders.',
+      'Participate in pitching competitions, innovation challenges, and entrepreneurship boot camps.'
+    ],
+    programmes:['INSKEN Business Coaching Programme','SME Corp Malaysia Business Accelerator Programmes','Cradle Fund Entrepreneurship Programmes','Yayasan Hasanah Community Development Initiatives'],
+    goal:'Transform your ideas into actionable projects and gain hands-on experience in creating sustainable social impact.'
+  },
+  High: {
+    key:'High', label:'High Readiness', stageIdx:2, min:288, max:420,
+    color:'var(--sprout)', bg:'var(--sprout-light)', icon:ICONS.rolemodel,
+    title:"You're Ready to Make a Difference!",
+    p1:"Congratulations. Your Y-SERA score demonstrates a high level of readiness for social entrepreneurship. You possess strong social awareness, entrepreneurial motivation, relevant knowledge, access to resources, and the mindset needed to create meaningful social impact. You are well-positioned to move beyond preparation and begin implementing your social enterprise initiatives.",
+    p2:"At this stage, you should focus on execution, growth, and long-term sustainability. You are encouraged to:",
+    bullets:[
+      'Develop and launch your social enterprise or expand an existing initiative.',
+      'Participate in incubation and acceleration programmes to strengthen your business model.',
+      'Apply for grants, funding opportunities, and impact investment programmes.',
+      'Establish strategic partnerships with government agencies, corporations, NGOs, and community stakeholders.',
+      'Measure and report your social impact to demonstrate value and attract support.',
+      'Mentor and inspire other aspiring social entrepreneurs within your community.'
+    ],
+    programmes:['Cradle Fund Grant and Startup Support Initiatives','SME Corp Malaysia Business Expansion Programmes','Malaysia Digital Economy Corporation (MDEC) Entrepreneurship Programmes','Yayasan Hasanah Social Impact Funding Opportunities','Corporate Social Responsibility (CSR) and ESG Partnership Initiatives'],
+    goal:'Scale your social enterprise, strengthen your impact, and become a catalyst for positive social change in Malaysia.'
+  }
+};
+
+function classify(score){
+  if(score <= 164) return LEVELS.Low;
+  if(score <= 287) return LEVELS.Moderate;
+  return LEVELS.High;
+}
+
+const TOTAL_ITEMS = DIMENSIONS.reduce((a,d)=>a+d.items.length,0); // 42
+const MAX_SCORE = TOTAL_ITEMS*10; // 420
+
+/* =========================================================
+   STORAGE HELPERS
+   ---------------------------------------------------------
+   This site can run two ways:
+   1) Pasted with a real FIREBASE_CONFIG below -> all visitors
+      share one live dashboard (Firestore).
+   2) Left as-is (no config) -> falls back to this browser's
+      own localStorage, so the site still works for solo
+      testing, but the dashboard only reflects this device.
+========================================================= */
+
+// 1. Go to https://console.firebase.google.com -> Add project (free, no card needed)
+// 2. Build > Firestore Database > Create database (choose "Start in test mode" for now)
+// 3. Project settings (gear icon, top left) > General tab > Your apps > Web app ( </> )
+// 4. Copy the firebaseConfig values it gives you into the object below
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDS8ASjvu7WRPl3ukO6Gx6io_ade8jHm04",
+  authDomain: "y-sera.firebaseapp.com",
+  projectId: "y-sera",
+  storageBucket: "y-sera.firebasestorage.app",
+  messagingSenderId: "157911698435",
+  appId: "1:157911698435:web:5f23080adbdb7d4a9c5236"
+};
+
+let db = null;
+let firebaseReady = false;
+try{
+  if(typeof firebase !== 'undefined' && FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY"){
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    firebaseReady = true;
+  }
+}catch(e){ console.error('Firebase init failed, falling back to localStorage', e); }
+
+// A stable per-browser ID, used to scope "personal" data (profile, in-progress
+// answers, history) when there's no real login system.
+function getDeviceId(){
+  let id = localStorage.getItem('ysera-device-id');
+  if(!id){
+    id = 'd_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+    localStorage.setItem('ysera-device-id', id);
+  }
+  return id;
+}
+
+async function storageGet(key, shared){
+  if(firebaseReady){
+    try{
+      const coll = shared ? 'ysera-shared' : 'ysera-personal';
+      const docId = shared ? key : (getDeviceId() + '__' + key);
+      const snap = await db.collection(coll).doc(docId).get();
+      return snap.exists ? JSON.parse(snap.data().value) : null;
+    }catch(e){ console.error('Firestore get failed', key, e); return null; }
+  }
+  try{
+    const raw = localStorage.getItem((shared ? 'shared:' : 'personal:') + key);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+async function storageSet(key, value, shared){
+  if(firebaseReady){
+    try{
+      const coll = shared ? 'ysera-shared' : 'ysera-personal';
+      const docId = shared ? key : (getDeviceId() + '__' + key);
+      await db.collection(coll).doc(docId).set({ value: JSON.stringify(value), updatedAt: new Date().toISOString() });
+      return true;
+    }catch(e){ console.error('Firestore set failed', key, e); return false; }
+  }
+  try{
+    localStorage.setItem((shared ? 'shared:' : 'personal:') + key, JSON.stringify(value));
+    return true;
+  }catch(e){ console.error('localStorage set failed', key, e); return false; }
+}
+
+function genId(){ return 'p_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
+
+/* =========================================================
+   STATE
+========================================================= */
+let profile = null;            // {id,name,email,registeredAt}
+let progress = {answers:{}, dimensionIndex:0}; // personal in-progress assessment
+let lastResult = null;         // most recent computed result for results page
+let pendingAfterRegister = null;
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(b=>{
+    b.classList.toggle('active', b.dataset.nav===id);
+  });
+  window.scrollTo({top:0, behavior:'instant' in window ? 'instant' : 'auto'});
+  if(id==='dashboard') renderDashboard();
+  if(id==='home') renderHomePreview();
+}
+document.querySelectorAll('[data-nav]').forEach(el=>{
+  el.addEventListener('click', ()=> showPage(el.dataset.nav));
+});
+
+/* =========================================================
+   REGISTRATION
+========================================================= */
+function openRegisterModal(after){
+  pendingAfterRegister = after || null;
+  document.getElementById('modal-register').classList.remove('hidden');
+  document.getElementById('reg-name').focus();
+}
+function closeRegisterModal(){
+  document.getElementById('modal-register').classList.add('hidden');
+}
+document.getElementById('btn-cancel-register').addEventListener('click', closeRegisterModal);
+document.getElementById('register-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  if(!name) return;
+  profile = {id:genId(), name, email, registeredAt:new Date().toISOString()};
+  await storageSet('ysera-profile', profile, false);
+  updateAccountChip();
+  closeRegisterModal();
+  if(pendingAfterRegister) pendingAfterRegister();
+});
+
+function updateAccountChip(){
+  const el = document.getElementById('account-chip');
+  el.textContent = profile ? profile.name : 'Not registered';
+}
+
+function requireProfile(after){
+  if(profile){ after(); } else { openRegisterModal(after); }
+}
+
+document.getElementById('btn-start-assessment').addEventListener('click', ()=> requireProfile(goToAssessment));
+document.getElementById('btn-start-assessment-2').addEventListener('click', ()=> requireProfile(goToAssessment));
+
+/* =========================================================
+   ASSESSMENT
+========================================================= */
+async function goToAssessment(){
+  const saved = await storageGet('ysera-progress', false);
+  progress = (saved && saved.answers) ? saved : {answers:{}, dimensionIndex:0};
+  showPage('assessment');
+  renderDimension(progress.dimensionIndex);
+}
+
+function renderProgressRail(){
+  const rail = document.getElementById('progress-rail');
+  rail.innerHTML = DIMENSIONS.map((d,i)=>{
+    let cls = '';
+    if(i < progress.dimensionIndex) cls = 'done';
+    else if(i === progress.dimensionIndex) cls = 'current';
+    return `<div class="progress-seg ${cls}" title="${d.short}"><div class="fill"></div></div>`;
+  }).join('');
+}
+
+function countAnswered(d){
+  return d.items.filter(it => progress.answers[it.id] !== undefined).length;
+}
+
+function renderDimension(idx){
+  progress.dimensionIndex = idx;
+  const d = DIMENSIONS[idx];
+  renderProgressRail();
+  document.getElementById('progress-caption-left').textContent = `Dimension ${idx+1} of ${DIMENSIONS.length}`;
+  document.getElementById('progress-caption-right').textContent = `${countAnswered(d)} of ${d.items.length} answered`;
+  document.getElementById('dim-icon-eyebrow').textContent = d.short;
+  document.getElementById('dim-title').textContent = d.name;
+  document.getElementById('dim-desc').textContent = d.description;
+
+  const container = document.getElementById('q-container');
+  container.innerHTML = d.items.map((it, qi)=>{
+    const stones = Array.from({length:10}, (_,n)=>n+1).map(n=>{
+      const val = progress.answers[it.id];
+      let cls = 'stone';
+      if(val !== undefined){
+        if(n === val) cls += ' selected';
+        else if(n < val) cls += ' filled';
+      }
+      return `<button type="button" class="${cls}" data-item="${it.id}" data-value="${n}" aria-label="Score ${n} out of 10 for: ${it.text}">${n}</button>`;
+    }).join('');
+    const readout = progress.answers[it.id] !== undefined ? anchorFor(progress.answers[it.id]) + ' · ' + progress.answers[it.id] + '/10' : '';
+    return `
+      <div class="q-card">
+        <div class="q-text">${qi+1}. ${it.text}</div>
+        <div class="scale-row" data-qid="${it.id}">${stones}</div>
+        <div class="scale-foot"><span>Not at all true</span><span>Completely true</span></div>
+        <div class="scale-readout" id="readout-${it.id}">${readout}</div>
+      </div>`;
+  }).join('');
+
+  container.querySelectorAll('.stone').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const itemId = btn.dataset.item;
+      const value = parseInt(btn.dataset.value, 10);
+      progress.answers[itemId] = value;
+      // repaint this scale row
+      const row = container.querySelector(`.scale-row[data-qid="${itemId}"]`);
+      row.querySelectorAll('.stone').forEach(s=>{
+        const n = parseInt(s.dataset.value,10);
+        s.classList.remove('selected','filled');
+        if(n === value) s.classList.add('selected');
+        else if(n < value) s.classList.add('filled');
+      });
+      document.getElementById(`readout-${itemId}`).textContent = anchorFor(value) + ' · ' + value + '/10';
+      document.getElementById('progress-caption-right').textContent = `${countAnswered(d)} of ${d.items.length} answered`;
+      updateNextButton(d);
+      await storageSet('ysera-progress', progress, false);
+    });
+  });
+
+  document.getElementById('btn-back').disabled = (idx===0);
+  updateNextButton(d);
+  const isLast = idx === DIMENSIONS.length-1;
+  document.getElementById('btn-next').textContent = isLast ? 'See My Results →' : 'Next →';
+}
+
+function updateNextButton(d){
+  const complete = countAnswered(d) === d.items.length;
+  const btn = document.getElementById('btn-next');
+  btn.disabled = !complete;
+  document.getElementById('assess-hint').textContent = complete ? 'All set — continue when ready' : 'Answer all 6 items to continue';
+}
+
+document.getElementById('btn-back').addEventListener('click', async ()=>{
+  if(progress.dimensionIndex > 0){
+    await storageSet('ysera-progress', progress, false);
+    renderDimension(progress.dimensionIndex-1);
+  }
+});
+
+document.getElementById('btn-next').addEventListener('click', async ()=>{
+  const isLast = progress.dimensionIndex === DIMENSIONS.length-1;
+  await storageSet('ysera-progress', progress, false);
+  if(isLast){
+    await finishAssessment();
+  } else {
+    renderDimension(progress.dimensionIndex+1);
+  }
+});
+
+async function finishAssessment(){
+  const dimensionScores = {};
+  let total = 0;
+  DIMENSIONS.forEach(d=>{
+    let sum = 0;
+    d.items.forEach(it => sum += (progress.answers[it.id]||0));
+    dimensionScores[d.key] = sum; // out of 60
+    total += sum;
+  });
+  const level = classify(total);
+  const record = {
+    id: profile.id,
+    name: profile.name,
+    total,
+    maxScore: MAX_SCORE,
+    levelKey: level.key,
+    dimensionScores,
+    date: new Date().toISOString()
+  };
+  lastResult = record;
+
+  // personal history
+  const history = (await storageGet('ysera-history', false)) || [];
+  history.unshift(record);
+  await storageSet('ysera-history', history.slice(0,20), false);
+
+  // shared dashboard data
+  const dash = (await storageGet('ysera-dashboard', true)) || {participants:[]};
+  dash.participants = dash.participants || [];
+  dash.participants.unshift(record);
+  dash.participants = dash.participants.slice(0,500);
+  await storageSet('ysera-dashboard', dash, true);
+
+  // reset in-progress assessment
+  progress = {answers:{}, dimensionIndex:0};
+  await storageSet('ysera-progress', progress, false);
+
+  renderResults(record);
+  showPage('results');
+}
+
+/* =========================================================
+   RESULTS PAGE
+========================================================= */
+function renderResults(record){
+  const level = LEVELS[record.levelKey];
+  const container = document.getElementById('results-container');
+  container.innerHTML = `
+    <div class="result-top">
+      <div class="level-badge" style="background:${level.color}">${level.icon}</div>
+      <div>
+        <span class="result-pill" style="background:${level.bg};color:${level.color}">${level.label}</span>
+        <div class="score-line">Total Score (range ${level.min}–${level.max})</div>
+        <div class="score-num">${record.total}<small> / ${record.maxScore}</small></div>
+      </div>
+    </div>
+    <h2 class="result-title">${level.title}</h2>
+    <div class="result-grid">
+      <div class="panel">
+        <p>${level.p1}</p>
+        <p>${level.p2}</p>
+        <ul class="check-list">
+          ${level.bullets.map(b=>`<li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg><span>${b}</span></li>`).join('')}
+        </ul>
+        <div class="goal-box">
+          <span class="eyebrow">Your next goal</span>
+          <p>${level.goal}</p>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Recommended Malaysian programmes &amp; agencies</h3>
+        <div class="chip-list">
+          ${level.programmes.map(p=>`<span class="chip">${p}</span>`).join('')}
+        </div>
+        <div class="divider" style="margin:22px 0"></div>
+        <h3>Your dimension scores</h3>
+        <div class="dim-bars">
+          ${DIMENSIONS.map(d=>{
+            const s = record.dimensionScores[d.key];
+            const pct = Math.round((s/60)*100);
+            return `<div class="dim-bar-row"><span>${d.short}</span><div class="dim-bar-track"><div class="dim-bar-fill" style="width:${pct}%"></div></div><span class="dim-bar-val">${(s/6).toFixed(1)}</span></div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:30px">
+      <button class="btn btn-primary" id="btn-download-result">Download My Result</button>
+      <button class="btn btn-secondary" data-nav="home">Return to Home</button>
+    </div>
+  `;
+  container.querySelector('[data-nav="home"]').addEventListener('click', ()=> showPage('home'));
+  document.getElementById('btn-download-result').addEventListener('click', ()=> downloadResult(record, level));
+}
+
+function downloadResult(record, level){
+  const lines = [];
+  lines.push('Y-SERA — Youth Social Entrepreneurship Readiness Assessment');
+  lines.push('================================================');
+  lines.push(`Name: ${record.name}`);
+  lines.push(`Date: ${new Date(record.date).toLocaleString()}`);
+  lines.push(`Total Score: ${record.total} / ${record.maxScore}`);
+  lines.push(`Readiness Level: ${level.label}`);
+  lines.push('');
+  lines.push(level.title);
+  lines.push(level.p1);
+  lines.push('');
+  lines.push(level.p2);
+  level.bullets.forEach(b=> lines.push('- ' + b));
+  lines.push('');
+  lines.push('Recommended Malaysian Programmes and Agencies:');
+  level.programmes.forEach(p=> lines.push('- ' + p));
+  lines.push('');
+  lines.push('Your Next Goal: ' + level.goal);
+  lines.push('');
+  lines.push('Dimension scores (out of 10 average):');
+  DIMENSIONS.forEach(d=> lines.push(`- ${d.name}: ${(record.dimensionScores[d.key]/6).toFixed(1)}`));
+
+  const blob = new Blob([lines.join('\n')], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Y-SERA-Result-${record.name.replace(/\s+/g,'_')}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* =========================================================
+   HOME PREVIEW
+========================================================= */
+async function renderHomePreview(){
+  const dash = (await storageGet('ysera-dashboard', true)) || {participants:[]};
+  const list = dash.participants || [];
+  document.getElementById('home-stat-total').textContent = list.length;
+  const counts = {Low:0, Moderate:0, High:0};
+  list.forEach(r => { if(counts[r.levelKey]!==undefined) counts[r.levelKey]++; });
+  const max = Math.max(1, ...Object.values(counts));
+  const colors = {Low:'var(--clay)', Moderate:'var(--amber)', High:'var(--sprout)'};
+  document.getElementById('home-preview-bars').innerHTML = Object.keys(counts).map(k=>`
+    <div class="preview-bar-row">
+      <span class="preview-bar-label">${k}</span>
+      <div class="preview-bar-track"><div class="preview-bar-fill" style="width:${(counts[k]/max)*100}%;background:${colors[k]}"></div></div>
+      <span class="preview-bar-count">${counts[k]}</span>
+    </div>`).join('');
+}
+
+/* =========================================================
+   ABOUT / HOME DIMENSION CARDS (static render)
+========================================================= */
+function renderDimensionCards(targetId){
+  document.getElementById(targetId).innerHTML = DIMENSIONS.map(d=>`
+    <div class="dim-card">
+      <div class="icon-badge">${ICONS[d.key]}</div>
+      <h3>${d.name}</h3>
+      <p>${d.description}</p>
+    </div>`).join('');
+}
+
+/* =========================================================
+   DASHBOARD
+========================================================= */
+let chartBarRef = null, chartPieRef = null;
+
+function updateSharedNote(){
+  const el = document.getElementById('shared-note-text');
+  const note = document.getElementById('shared-note');
+  if(!el) return;
+  if(firebaseReady){
+    el.textContent = 'This data is shared live across everyone using this site, and anonymised by name where possible.';
+    note.style.color = 'var(--ink-soft)';
+  } else {
+    el.textContent = 'Demo mode: Firebase isn\'t configured yet, so this dashboard only reflects results saved on this browser/device, not other visitors.';
+    note.style.color = 'var(--clay)';
+  }
+}
+
+async function renderDashboard(){
+  updateSharedNote();
+  const dash = (await storageGet('ysera-dashboard', true)) || {participants:[]};
+  const list = dash.participants || [];
+
+  const counts = {Low:0, Moderate:0, High:0};
+  list.forEach(r => { if(counts[r.levelKey]!==undefined) counts[r.levelKey]++; });
+  const avgScore = list.length ? (list.reduce((a,r)=>a+r.total,0)/list.length) : 0;
+  const mostCommon = list.length ? Object.keys(counts).reduce((a,b)=> counts[a]>=counts[b]?a:b) : '—';
+
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="stat-card"><span class="eyebrow">Total participants assessed</span><div class="num">${list.length}</div></div>
+    <div class="stat-card"><span class="eyebrow">Average total score</span><div class="num">${avgScore.toFixed(0)} <small style="font-size:1rem;color:var(--ink-soft)">/ ${MAX_SCORE}</small></div></div>
+    <div class="stat-card"><span class="eyebrow">Most common level</span><div class="num">${mostCommon}</div></div>
+  `;
+
+  if(!list.length){
+    document.getElementById('dash-table-wrap').innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3v18h18M7 15l4-5 3 3 5-7"/></svg>
+        <p style="margin:0">No assessments completed yet. Results will appear here once youth-preneurs finish the Y-SERA assessment.</p>
+      </div>`;
+  } else {
+    document.getElementById('dash-table-wrap').innerHTML = `
+      <table class="results-table">
+        <thead><tr><th>Name</th><th>Score</th><th>Level</th><th>Date</th></tr></thead>
+        <tbody>
+          ${list.slice(0,20).map(r=>{
+            const lvl = LEVELS[r.levelKey];
+            return `<tr><td>${r.name}</td><td>${r.total} / ${r.maxScore}</td><td><span class="lvl-tag" style="background:${lvl.bg};color:${lvl.color}">${r.levelKey}</span></td><td>${new Date(r.date).toLocaleDateString()}</td></tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // dimension averages out of 10
+  const dimAvg = {};
+  DIMENSIONS.forEach(d=>{
+    if(!list.length){ dimAvg[d.key]=0; return; }
+    const sum = list.reduce((a,r)=> a + (r.dimensionScores ? (r.dimensionScores[d.key]||0) : 0), 0);
+    dimAvg[d.key] = (sum/list.length)/6; // average item score out of 10
+  });
+  document.getElementById('dim-bars').innerHTML = DIMENSIONS.map(d=>`
+    <div class="dim-bar-row">
+      <span>${d.short}</span>
+      <div class="dim-bar-track"><div class="dim-bar-fill" style="width:${(dimAvg[d.key]/10)*100}%"></div></div>
+      <span class="dim-bar-val">${dimAvg[d.key].toFixed(1)}</span>
+    </div>`).join('');
+
+  renderCharts(counts);
+}
+
+function renderCharts(counts){
+  if(typeof Chart === 'undefined') return;
+  const barCtx = document.getElementById('chart-bar');
+  const pieCtx = document.getElementById('chart-pie');
+  const palette = ['#BD6A3E','#C8932E','#3F8F5C'];
+  const labels = ['Low','Moderate','High'];
+  const data = labels.map(l=>counts[l]||0);
+
+  if(chartBarRef) chartBarRef.destroy();
+  chartBarRef = new Chart(barCtx, {
+    type:'bar',
+    data:{ labels, datasets:[{ data, backgroundColor:palette, borderRadius:6, maxBarThickness:60 }] },
+    options:{
+      plugins:{legend:{display:false}},
+      scales:{ y:{ beginAtZero:true, ticks:{precision:0} } }
+    }
+  });
+
+  if(chartPieRef) chartPieRef.destroy();
+  chartPieRef = new Chart(pieCtx, {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data, backgroundColor:palette }] },
+    options:{ plugins:{ legend:{ position:'bottom' } } }
+  });
+}
+
+/* =========================================================
+   CLEAR MY DATA
+========================================================= */
+document.getElementById('btn-clear-mine').addEventListener('click', async ()=>{
+  if(!profile){ alert('No profile found on this device yet.'); return; }
+  if(!confirm('Clear your saved profile, in-progress answers, and personal result history? This does not remove your past results from the shared trainer dashboard.')) return;
+  await storageSet('ysera-profile', null, false);
+  await storageSet('ysera-progress', {answers:{}, dimensionIndex:0}, false);
+  await storageSet('ysera-history', [], false);
+  profile = null;
+  progress = {answers:{}, dimensionIndex:0};
+  updateAccountChip();
+  showPage('home');
+});
+
+/* =========================================================
+   INIT
+========================================================= */
+async function init(){
+  renderDimensionCards('home-dim-grid');
+  renderDimensionCards('about-dim-grid');
+  profile = await storageGet('ysera-profile', false);
+  updateAccountChip();
+  renderHomePreview();
+  showPage('home');
+}
+init();
+</script>
+</body>
+</html>
