@@ -82,7 +82,13 @@
     display:flex;align-items:center;justify-content:space-between;gap:16px;
   }
   .brand{display:flex;align-items:center;gap:10px;cursor:pointer;border:none;background:none;padding:0;}
-  .brand-mark{width:34px;height:34px;flex:none;}
+  .brand-mark {
+  height: 60px; /* Keeps the navigation bar a normal height */
+  width: auto;
+  flex: none;
+  transform: scale(1.6); /* Visually enlarges the logo by 60% */
+  transform-origin: left center; /* Ensures it grows to the right, not off the screen */
+}
   .brand-text{font-family:'Fraunces',serif;font-weight:560;font-size:1.18rem;color:var(--ink);}
   .brand-text span{color:var(--compass);}
   .nav-links{display:flex;gap:4px;align-items:center;}
@@ -115,6 +121,12 @@
   .btn-row{display:flex;gap:14px;flex-wrap:wrap;}
 
   /* ---------- hero ---------- */
+  .hero-bg {
+  background-image: url('background-entre.jpg'); /* Replace with your actual file name */
+  background-size: cover; /* Ensures the image fills the space completely */
+  background-position: center; /* Keeps the main part of the image centered */
+  background-repeat: no-repeat;
+}
   .hero{padding:64px 0 36px;}
   .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;}
   .hero h1{font-size:clamp(2.1rem,4vw,3.1rem);line-height:1.06;}
@@ -296,13 +308,8 @@
 <nav class="topnav">
   <div class="topnav-inner">
     <button class="brand" data-nav="home" aria-label="Y-SERA home">
-      <svg class="brand-mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="20" cy="20" r="19" fill="#1E5F74"/>
-        <path d="M9 24c4-7 9-9 13-5s9 2 13-5" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
-        <circle cx="14" cy="14" r="3" fill="#E2772F"/>
-      </svg>
-      <span class="brand-text">Y<span>-SERA</span></span>
-    </button>
+  <img src="Y-SERA-logo.png" class="brand-mark rectangle-logo" alt="Y-SERA Logo">
+</button>
     <div class="nav-links" role="navigation">
       <button class="nav-link" data-nav="home">Home</button>
       <button class="nav-link" data-nav="about">About</button>
@@ -317,7 +324,8 @@
 
   <!-- ===================== HOME ===================== -->
   <section class="page active" id="page-home">
-    <div class="wrap hero">
+    <div class="hero-bg">
+     <div class="wrap hero">
       <div class="hero-grid">
         <div>
           <span class="eyebrow">Youth Social Entrepreneurship Readiness Assessment</span>
@@ -367,6 +375,7 @@
         </div>
       </div>
     </div>
+   </div>
 
     <div class="wrap block">
       <div class="block-head">
