@@ -219,11 +219,11 @@
   .modal-card h2{font-size:1.4rem;}
   .field{margin-bottom:16px;}
   .field label{display:block;font-size:.82rem;font-weight:600;color:var(--ink-soft);margin-bottom:6px;}
-  .field input{
+  .field input, .field select {
     width:100%;padding:11px 13px;border-radius:9px;border:1.5px solid var(--line);font-size:.95rem;
     font-family:inherit;background:var(--mist);color:var(--ink);
   }
-  .field input:focus{border-color:var(--compass);outline:none;background:var(--paper);}
+  .field input:focus, .field select:focus {border-color:var(--compass);outline:none;background:var(--paper);}
   .modal-foot{font-size:.78rem;color:var(--ink-soft);margin-top:6px;}
 
   /* ---------- results ---------- */
@@ -512,6 +512,64 @@
         <label for="reg-email">Email (optional)</label>
         <input id="reg-email" type="email" placeholder="you@example.com">
       </div>
+      <div class="field">
+    <label for="reg-state">1. In which state is your business primarily located?</label>
+    <select id="reg-state" required>
+      <option value="" disabled selected>Select a state...</option>
+      <option value="Pahang">Pahang</option>
+      <option value="Kelantan">Kelantan</option>
+      <option value="Terengganu">Terengganu</option>
+      <option value="Other">Other</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="reg-gender">2. Gender</label>
+    <select id="reg-gender" required>
+      <option value="" disabled selected>Select gender...</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="reg-age">3. Age Group</label>
+    <select id="reg-age" required>
+      <option value="" disabled selected>Select age group...</option>
+      <option value="15-17">15 – 17</option>
+      <option value="18-24">18 – 24</option>
+      <option value="25-30">25 – 30</option>
+      <option value="31-35">31 – 35</option>
+      <option value="36-40">36 – 40</option>
+      <option value="41+">41 years old and above</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="reg-experience">4. Years of Entrepreneurial Experience</label>
+    <select id="reg-experience" required>
+      <option value="" disabled selected>Select experience...</option>
+      <option value="Less than 1 year">Less than 1 year</option>
+      <option value="1-5 years">1 – 5 years</option>
+      <option value="6-10 years">6 – 10 years</option>
+      <option value="11-15 years">11 – 15 years</option>
+      <option value="16-20 years">16 – 20 years</option>
+      <option value="More than 20 years">More than 20 years</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="reg-industry">5. Primary Industry or Business Sector</label>
+    <select id="reg-industry" required>
+      <option value="" disabled selected>Select industry...</option>
+      <option value="Retail and Wholesale">Retail and Wholesale</option>
+      <option value="Food and Beverage">Food and Beverage (F&B)</option>
+      <option value="Service-Based">Service-Based</option>
+      <option value="Manufacturing">Manufacturing</option>
+      <option value="Agriculture and Agro-Based">Agriculture and Agro-Based</option>
+      <option value="Beauty and Health">Beauty and Health</option>
+      <option value="Creative and Media">Creative and Media</option>
+      <option value="Logistics and Transportation">Logistics and Transportation</option>
+      <option value="Tourism and Hospitality">Tourism and Hospitality</option>
+      <option value="Other">Other</option>
+    </select>
+  </div>
       <div class="btn-row" style="margin-top:18px">
         <button type="submit" class="btn btn-primary" style="flex:1">Continue to assessment</button>
         <button type="button" class="btn btn-ghost" id="btn-cancel-register">Cancel</button>
@@ -795,10 +853,33 @@ function closeRegisterModal(){
 document.getElementById('btn-cancel-register').addEventListener('click', closeRegisterModal);
 document.getElementById('register-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
+  
+  // Existing fields
   const name = document.getElementById('reg-name').value.trim();
   const email = document.getElementById('reg-email').value.trim();
+  
+  // New demographic dropdown fields
+  const state = document.getElementById('reg-state').value;
+  const gender = document.getElementById('reg-gender').value;
+  const age = document.getElementById('reg-age').value;
+  const experience = document.getElementById('reg-experience').value;
+  const industry = document.getElementById('reg-industry').value;
+
   if(!name) return;
-  profile = {id:genId(), name, email, registeredAt:new Date().toISOString()};
+  
+  // Update profile object with all the new variables
+  profile = {
+    id: genId(), 
+    name, 
+    email, 
+    state,
+    gender,
+    age,
+    experience,
+    industry,
+    registeredAt: new Date().toISOString()
+  };
+  
   await storageSet('ysera-profile', profile, false);
   updateAccountChip();
   closeRegisterModal();
@@ -935,6 +1016,12 @@ async function finishAssessment(){
   const record = {
     id: profile.id,
     name: profile.name,
+    email: profile.email,
+    state: profile.state,
+    gender: profile.gender,
+    age: profile.age,
+    experience: profile.experience,
+    industry: profile.industry,
     total,
     maxScore: MAX_SCORE,
     levelKey: level.key,
