@@ -519,8 +519,9 @@
       <option value="Pahang">Pahang</option>
       <option value="Kelantan">Kelantan</option>
       <option value="Terengganu">Terengganu</option>
-      <option value="Other">Other</option>
+      <option value="Other">Other (please specify)</option>
     </select>
+    <input id="reg-state-other" type="text" placeholder="Please specify your state" style="display: none; margin-top: 8px;">
   </div>
   <div class="field">
     <label for="reg-gender">2. Gender</label>
@@ -567,8 +568,9 @@
       <option value="Creative and Media">Creative and Media</option>
       <option value="Logistics and Transportation">Logistics and Transportation</option>
       <option value="Tourism and Hospitality">Tourism and Hospitality</option>
-      <option value="Other">Other</option>
+      <option value="Other">Other (please specify)</option>
     </select>
+    <input id="reg-industry-other" type="text" placeholder="Please specify your industry" style="display: none; margin-top: 8px;">
   </div>
       <div class="btn-row" style="margin-top:18px">
         <button type="submit" class="btn btn-primary" style="flex:1">Continue to assessment</button>
@@ -839,6 +841,31 @@ document.querySelectorAll('[data-nav]').forEach(el=>{
   el.addEventListener('click', ()=> showPage(el.dataset.nav));
 });
 
+// Toggle "Other" text inputs for State
+document.getElementById('reg-state').addEventListener('change', function() {
+  const otherInput = document.getElementById('reg-state-other');
+  if (this.value === 'Other') {
+    otherInput.style.display = 'block';
+    otherInput.required = true;
+  } else {
+    otherInput.style.display = 'none';
+    otherInput.required = false;
+    otherInput.value = ''; // Clear it out if they change their mind
+  }
+});
+
+// Toggle "Other" text inputs for Industry
+document.getElementById('reg-industry').addEventListener('change', function() {
+  const otherInput = document.getElementById('reg-industry-other');
+  if (this.value === 'Other') {
+    otherInput.style.display = 'block';
+    otherInput.required = true;
+  } else {
+    otherInput.style.display = 'none';
+    otherInput.required = false;
+    otherInput.value = ''; // Clear it out if they change their mind
+  }
+});  
 /* =========================================================
    REGISTRATION
 ========================================================= */
@@ -859,11 +886,19 @@ document.getElementById('register-form').addEventListener('submit', async (e)=>{
   const email = document.getElementById('reg-email').value.trim();
   
   // New demographic dropdown fields
-  const state = document.getElementById('reg-state').value;
+  let state = document.getElementById('reg-state').value;
   const gender = document.getElementById('reg-gender').value;
   const age = document.getElementById('reg-age').value;
   const experience = document.getElementById('reg-experience').value;
-  const industry = document.getElementById('reg-industry').value;
+  let industry = document.getElementById('reg-industry').value;
+
+  // OVERRIDE WITH TEXT BOX VALUES IF 'OTHER' IS SELECTED
+  if (state === 'Other') {
+    state = document.getElementById('reg-state-other').value.trim();
+  }
+  if (industry === 'Other') {
+    industry = document.getElementById('reg-industry-other').value.trim();
+  }
 
   if(!name) return;
   
